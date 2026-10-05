@@ -113,7 +113,9 @@ form.addEventListener("submit", async (event) => {
     }
 
     const statusMessage = result.demo
-      ? `Demo issue created: ${result.id}. This was saved locally and not sent to OpenProject.`
+      ? result.persistent
+        ? `Demo issue created: ${result.id}. Saved locally; not sent to OpenProject.`
+        : `Demo submission received: ${result.id}. Nothing was saved or sent to OpenProject.`
       : `Issue created${result.id ? `: #${result.id}` : ""}.`;
     showStatus(statusMessage, "success");
     if (result.url) {

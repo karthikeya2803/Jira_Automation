@@ -40,3 +40,12 @@ python app.py
 The account's work-package permissions and required custom fields are controlled by your OpenProject instance. If your project requires custom fields, those field values need to be added to the form and mapped to the instance's custom-field API properties.
 
 OpenProject API documentation: [API introduction](https://www.openproject.org/docs/api/introduction/) and [Work Packages endpoint](https://www.openproject.org/docs/api/endpoints/work-packages/).
+
+## Deploy on Vercel
+
+1. Push this repository to GitHub and import it from the Vercel dashboard.
+2. Keep the project root as the Vercel root directory. Vercel serves assets from `public/` and routes the Python handlers in `api/`.
+3. Without a complete OpenProject configuration, the backend automatically runs in demo mode. You can also explicitly set `OPENPROJECT_DEMO_MODE=true` in Vercel's Environment Variables.
+4. Deploy. The form and API are available from the generated Vercel URL.
+
+In Vercel demo mode, submissions are simulated and are **not persisted**: Vercel function filesystems are temporary. To create and keep real work packages, configure `OPENPROJECT_URL`, `OPENPROJECT_API_KEY`, `OPENPROJECT_PROJECT_ID`, and `OPENPROJECT_TYPE_ID` in Vercel instead, and set `OPENPROJECT_DEMO_MODE=false`. A publicly accessible live issue-creation form should be protected against spam before enabling it.

@@ -1,5 +1,6 @@
 import json
 import os
+import secrets
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -9,7 +10,7 @@ from urllib.request import Request, urlopen
 
 
 ROOT = Path(__file__).resolve().parent
-STATIC_ROOT = ROOT / "static"
+STATIC_ROOT = ROOT / "public"
 MAX_REQUEST_BYTES = 32_768
 PRIORITIES = {"Highest", "High", "Medium", "Low", "Lowest"}
 STATIC_FILES = {
@@ -69,11 +70,35 @@ class DemoStorageError(Exception):
 
 
 def _demo_mode_enabled():
-    return os.environ.get("OPENPROJECT_DEMO_MODE", "").strip().casefold() == "true"
+    configured = all(
+        os.environ.get(name, "").strip()
+        for name in (
+            "OPENPROJECT_URL",
+            "OPENPROJECT_API_KEY",
+            "OPENPROJECT_PROJECT_ID",
+            "OPENPROJECT_TYPE_ID",
+        )
+    )
+    mode = os.environ.get("OPENPROJECT_DEMO_MODE")
+    if mode is None or not mode.strip():
+        return not configured
+    return mode.strip().casefold() == "true"
 
 
 def create_demo_work_package(issue):
     with DEMO_STORAGE_LOCK:
+        if os.environ.get("VERCEL") == "1":
+            return {
+                "id": f"DEMO-{secrets.token_hex(4).upper()}",
+                "subject": issue["summary"],
+                "priority": issue["priority"],
+                "applicationName": issue["applicationName"],
+                "businessImpact": issue["businessImpact"],
+                "description": issue["description"],
+                "demo": True,
+                "persistent": False,
+            }
+
         try:
             if DEMO_STORAGE_PATH.exists():
                 stored = json.loads(DEMO_STORAGE_PATH.read_text(encoding="utf-8"))
@@ -90,6 +115,7 @@ def create_demo_work_package(issue):
                 "businessImpact": issue["businessImpact"],
                 "description": issue["description"],
                 "demo": True,
+                "persistent": True,
             }
             stored.append(work_package)
             DEMO_STORAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
